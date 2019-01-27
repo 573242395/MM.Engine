@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace MM.Engine
 {
@@ -24,8 +25,9 @@ namespace MM.Engine
         /// 载入脚本
         /// </summary>
         /// <param name="file">文件名</param>
+        /// <param name="funName">函数名</param>
         /// <returns>载入成功返回true，失败返回false</returns>
-        bool Load(string file);
+        bool Load(string file, string funName = "Main");
 
         /// <summary>
         /// 卸载脚本
@@ -37,24 +39,24 @@ namespace MM.Engine
         /// <summary>
         /// 执行脚本
         /// </summary>
-        /// <param name="appName">应用名</param>
+        /// <param name="file">应用名</param>
         /// <param name="funName">函数名</param>
         /// <param name="param1">参数1</param>
         /// <param name="param2">参数2</param>
         /// <param name="param3">参数3</param>
         /// <returns>返回执行结果</returns>
-        object Run(string appName, string funName = null, object param1 = null, object param2 = null, object param3 = null);
+        object Run(string file, string funName, object param1 = null, object param2 = null, object param3 = null);
 
         /// <summary>
         /// 执行脚本
         /// </summary>
-        /// <param name="appName">应用名</param>
+        /// <param name="file">应用名</param>
         /// <param name="funName">函数名</param>
         /// <param name="param1">参数1</param>
         /// <param name="param2">参数2</param>
         /// <param name="param3">参数3</param>
         /// <returns>返回执行结果</returns>
-        void RunAsync(string appName, string funName = null, object param1 = null, object param2 = null, object param3 = null);
+        Task RunAsync(string file, string funName, object param1 = null, object param2 = null, object param3 = null);
 
         /// <summary>
         /// 执行脚本文件
@@ -65,7 +67,7 @@ namespace MM.Engine
         /// <param name="param2">参数2</param>
         /// <param name="param3">参数3</param>
         /// <returns>返回执行结果</returns>
-        object RunFile(string file, string funName = null, object param1 = null, object param2 = null, object param3 = null);
+        object RunFile(string file, string funName, object param1 = null, object param2 = null, object param3 = null);
 
         /// <summary>
         /// 执行脚本代码
@@ -76,7 +78,7 @@ namespace MM.Engine
         /// <param name="param2">参数2</param>
         /// <param name="param3">参数3</param>
         /// <returns>返回执行结果</returns>
-        object RunCode(string code, string funName = null, object param1 = null, object param2 = null, object param3 = null);
+        object RunCode(string code, string funName, object param1 = null, object param2 = null, object param3 = null);
 
         /// <summary>
         /// 获取函数 
@@ -84,6 +86,6 @@ namespace MM.Engine
         /// <param name="file">文件名</param>
         /// <param name="fun">函数名</param>
         /// <returns>返回函数</returns>
-        dynamic GetFun(string file, string fun = "Main");
+        dynamic GetFun(string file, string fun);
     }
 }

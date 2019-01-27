@@ -1,6 +1,7 @@
 ﻿using Serilog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using Xunit;
 using Xunit.Abstractions;
@@ -8,33 +9,24 @@ using Xunit.Abstractions;
 namespace MM.Engine.Test
 {
     /// <summary>
-    /// c#脚本引擎测试
+    /// python脚本引擎测试
     /// </summary>
-    public class CsTest
+    public class PyTest
     {
-        public IEngine eng = new CS();
+        public PY eng = new PY();
 
         /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="output">输出接口</param>
-        public CsTest(ITestOutputHelper output)
+        public PyTest(ITestOutputHelper output)
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.TestOutput(output, Serilog.Events.LogEventLevel.Verbose)
                 .CreateLogger();
-        }
-
-        /// <summary>
-        /// 获取错误信息
-        /// </summary>
-        [Fact]
-        private void GetEx()
-        {
-            var ex = eng.GetEx();
-            Log.Debug(ex.ToString());
-            Assert.True(!string.IsNullOrEmpty(ex));
+            Cache.runPath = Directory.GetCurrentDirectory() + "\\";
+            PY.Init();
         }
 
         /// <summary>
@@ -43,7 +35,7 @@ namespace MM.Engine.Test
         [Fact]
         private void EachLoad()
         {
-            List<string> appList = new List<string>() { "" };
+            List<string> appList = new List<string>() { Cache.runPath + "script\\test.py", Cache.runPath + "script\\py\\test1.py" };
 
             var bl = eng.EachLoad(appList);
             Log.Debug(bl.ToString());
@@ -56,10 +48,9 @@ namespace MM.Engine.Test
         [Fact]
         private void Load()
         {
-            string appName = "";
-            string file = "";
+            string file = Cache.runPath + "script\\py\\test1.py";
 
-            var bl = eng.Load(appName, file);
+            var bl = eng.Load(file);
             Log.Debug(bl.ToString());
             Assert.True(bl);
         }
@@ -70,28 +61,13 @@ namespace MM.Engine.Test
         [Fact]
         private void Unload()
         {
-            string appName = "";
+            string file = Cache.runPath + "script\\py\\test1.py";
+            eng.Load(file);
+            string appName = file + ":Main";
             var bl = eng.Unload(appName);
 
             Log.Debug(bl.ToString());
             Assert.True(bl);
-        }
-
-        /// <summary>
-        /// 执行脚本——无返回结果
-        /// </summary>
-        [Fact]
-        private void Execute()
-        {
-            string appName = "";
-            object param1 = null;
-            object param2 = null;
-            object param3 = null;
-            object param4 = null;
-
-            eng.Execute(appName, param1, param2, param3, param4);
-            Log.Debug(Cache.res.ToJson());
-            Assert.True(Cache.res.Count > 0);
         }
 
         /// <summary>
@@ -100,13 +76,14 @@ namespace MM.Engine.Test
         [Fact]
         public void Run()
         {
-            string appName = "";
-            object param1 = null;
-            object param2 = null;
-            object param3 = null;
-            object param4 = null;
+            string file = Cache.runPath + "script\\py\\test1.py";
+            string fun = "Main";
+            //var bl = eng.Load(file, fun);
+            object param1 = 1;
+            object param2 = 2;
+            object param3 = 3;
 
-            var ret = eng.Run(appName, param1, param2, param3, param4);
+            var ret = eng.Run(file, fun, param1, param2, param3);
             Log.Debug(ret.ToJson());
             Assert.True(ret != null);
         }
@@ -117,13 +94,14 @@ namespace MM.Engine.Test
         [Fact]
         public void RunAsync()
         {
-            string appName = "";
-            object param1 = null;
-            object param2 = null;
-            object param3 = null;
-            object param4 = null;
+            string file = Cache.runPath + "script\\test.py";
+            string fun = "Main";
+            // var bl = eng.Load(file, fun);
+            object param1 = 1;
+            object param2 = 2;
+            object param3 = 3;
 
-            eng.RunAsync(appName, param1, param2, param3, param4);
+            eng.RunAsync(file, fun, param1, param2, param3);
             Thread.Sleep(5000);
             Log.Debug(Cache.res.ToJson());
             Assert.True(Cache.res.Count > 0);
@@ -136,15 +114,16 @@ namespace MM.Engine.Test
         [Fact]
         private void RunFile()
         {
-            string file = "";
-            object param1 = null;
-            object param2 = null;
-            object param3 = null;
-            object param4 = null;
+            string file = Cache.runPath  + "script\\test.py";
+            string fun = "Main";
+            object param1 = 1;
+            object param2 = 2;
+            object param3 = 3;
 
-            var ret = eng.RunFile(file, param1, param2, param3, param4);
-            Log.Debug(ret.ToString());
+            var ret = eng.RunFile(file, fun, param1, param2, param3);
+            Log.Debug(eng.GetEx());
             Assert.True(ret != null);
+            Log.Debug(ret.ToString());
         }
 
         /// <summary>
@@ -153,13 +132,16 @@ namespace MM.Engine.Test
         [Fact]
         private void RunCode()
         {
-            string code = "";
-            object param1 = null;
-            object param2 = null;
-            object param3 = null;
-            object param4 = null;
+            string code = @"
+def Main(param1 = None, param2 = None, param3 = None):
+    return 'test'";
+            string fun = "Main";
+            object param1 = 1;
+            object param2 = 2;
+            object param3 = 3;
 
-            var ret = eng.RunCode(code, param1, param2, param3, param4);
+            var ret = eng.RunCode(code, fun, param1, param2, param3);
+            Log.Debug(eng.GetEx());
             Log.Debug(ret.ToString());
             Assert.True(ret != null);
         }
