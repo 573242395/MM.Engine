@@ -15,8 +15,8 @@ namespace MM.Engine
     /// </summary>
     public class PY : IEngine
     {
-        private static ScriptEngine Eng;
         private readonly string _Dir;
+        private static readonly ScriptEngine Eng = NewEngine();
 
         #region 属性
         /// <summary>
@@ -32,7 +32,7 @@ namespace MM.Engine
         /// <summary>
         /// 脚本函数字典
         /// </summary>
-        internal static ConcurrentDictionary<string, dynamic> dict = new ConcurrentDictionary<string, dynamic>();
+        internal static ConcurrentDictionary<string, dynamic> dict = new ConcurrentDictionary<string, dynamic>(StringComparer.OrdinalIgnoreCase);
  
         /// <summary>
         /// 脚本函数字典
@@ -99,12 +99,13 @@ namespace MM.Engine
         {
             var bl = false;
             file = Cache.ToFullName(file, _Dir);
-            var key = file.Replace(Cache.runPath, "") + ":" + fun;
             var funObj = GetFun(file, fun);
             //var obj = (object)funObj("1", "2", "3");
             //Debug.WriteLine(obj);
             if (funObj != null)
             {
+                var key = file.Replace(Cache.runPath, "") + ":" + fun;
+                key = key.ToLower();
                 if (dict.ContainsKey(key))
                 {
                     dict[key] = funObj;
@@ -127,7 +128,7 @@ namespace MM.Engine
         {
             if (!string.IsNullOrEmpty(appName))
             {
-                return dict.TryRemove(appName, out var value);
+                return dict.TryRemove(appName.Replace(Cache.runPath, ""), out var value);
             }
             return false;
         }
@@ -183,6 +184,7 @@ namespace MM.Engine
         public object Run(string file, string fun, object param1 = null, object param2 = null, object param3 = null)
         {
             var appName = file.Replace(Cache.runPath, "") + ":" + fun;
+            appName = appName.ToLower();
             if (!dict.ContainsKey(appName))
             {
                 var bl = Load(file, fun);
@@ -232,37 +234,28 @@ namespace MM.Engine
             }
             try
             {
-                var eng = NewEngine();
-                var scope = eng.CreateScope();
+                var scope = Eng.ExecuteFile(file);
                 scope.SetVariable("Cache", new Cache());
                 Engine.Dir = Path.GetDirectoryName(file) + "\\";
                 scope.SetVariable("Engine", Engine);
-                var source = eng.CreateScriptSourceFromFile(file);
-                if (source != null)
+                if (scope.TryGetVariable(fun, out dynamic funObj))
                 {
-                    var compiled = source.Execute(scope);
-                    if (scope.TryGetVariable(fun, out dynamic funObj))
+                    if (param1 == null)
                     {
-                        if (param1 == null)
-                        {
-                            return funObj();
-                        }
-                        else if (param2 == null)
-                        {
-                            return funObj(param1);
-                        }
-                        else if (param3 == null)
-                        {
-                            return funObj(param1, param2);
-                        }
-                        else {
-                            return funObj(param1, param2, param3);
-                        }
+                        return funObj();
                     }
-                }
-                else
-                {
-                    Ex = "引用文件错误";
+                    else if (param2 == null)
+                    {
+                        return funObj(param1);
+                    }
+                    else if (param3 == null)
+                    {
+                        return funObj(param1, param2);
+                    }
+                    else
+                    {
+                        return funObj(param1, param2, param3);
+                    }
                 }
             }
             catch (Exception ex)
@@ -369,12 +362,6 @@ namespace MM.Engine
             return null;
         }
 
-        /// <summary>
-        /// 初始化
-        /// </summary>
-        public static void Init() {
-            Eng = NewEngine();
-        }
 
         /// <summary>
         /// 新建脚本引擎

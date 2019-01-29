@@ -1,14 +1,22 @@
-﻿//using System.Collections.Concurrent;
+﻿//using CSScriptLib;
+//using IronPython.Hosting;
+//using Microsoft.Scripting.Hosting;
+//using System;
+//using System.Collections.Concurrent;
 //using System.Collections.Generic;
+//using System.IO;
+//using System.Reflection;
+//using System.Threading.Tasks;
 
 //namespace MM.Engine
 //{
 //    /// <summary>
-//    /// Csharp脚本引擎
+//    /// csharp脚本引擎
 //    /// </summary>
 //    public class CS : IEngine
 //    {
 //        private readonly string _Dir;
+//        private static readonly ScriptEngine Eng = NewEngine();
 
 //        #region 属性
 //        /// <summary>
@@ -24,7 +32,8 @@
 //        /// <summary>
 //        /// 脚本函数字典
 //        /// </summary>
-//        internal static ConcurrentDictionary<string, dynamic> dict = new ConcurrentDictionary<string, dynamic>();
+//        internal static ConcurrentDictionary<string, dynamic> dict = new ConcurrentDictionary<string, dynamic>(StringComparer.OrdinalIgnoreCase);
+
 //        /// <summary>
 //        /// 脚本函数字典
 //        /// </summary>
@@ -34,6 +43,7 @@
 //            set { dict = value; }
 //        }
 //        #endregion
+
 
 //        /// <summary>
 //        /// 构造函数
@@ -63,80 +73,195 @@
 //        /// <summary>
 //        /// 遍历加载
 //        /// </summary>
-//        /// <param name="appList">应用列表</param>
+//        /// <param name="files">文件列表</param>
 //        /// <returns>加载成功返回true，失败返回false</returns>
-//        public bool EachLoad(List<string> appList)
+//        public bool EachLoad(List<string> files)
 //        {
-//            return false;
+//            var bl = true;
+//            foreach (var file in files)
+//            {
+//                bl = Load(file);
+//                if (!bl)
+//                {
+//                    break;
+//                }
+//            }
+//            return bl;
 //        }
 
 //        /// <summary>
 //        /// 载入脚本
 //        /// </summary>
 //        /// <param name="file">文件名</param>
+//        /// <param name="fun">函数名</param>
 //        /// <returns>载入成功返回true，失败返回false</returns>
-//        public bool Load(string file)
+//        public bool Load(string file, string fun = "Main")
 //        {
-//            return false;
+//            var bl = false;
+//            file = Cache.ToFullName(file, _Dir);
+//            var funObj = GetFun(file, fun);
+//            //var obj = (object)funObj("1", "2", "3");
+//            //Debug.WriteLine(obj);
+//            if (funObj != null)
+//            {
+//                var key = file.Replace(Cache.runPath, "") + ":" + fun;
+//                key = key.ToLower();
+//                if (dict.ContainsKey(key))
+//                {
+//                    dict[key] = funObj;
+//                    bl = true;
+//                }
+//                else
+//                {
+//                    bl = dict.TryAdd(key, funObj);
+//                }
+//            }
+//            return bl;
 //        }
 
 //        /// <summary>
 //        /// 卸载脚本
 //        /// </summary>
-//        /// <param name="file">文件名</param>
+//        /// <param name="appName">应用名，由文件名 + 函数名组成</param>
 //        /// <returns>卸载成功返回true，失败返回false</returns>
-//        public bool Unload(string file)
+//        public bool Unload(string appName)
 //        {
-//            if (!string.IsNullOrEmpty(file))
+//            if (!string.IsNullOrEmpty(appName))
 //            {
-//                if (dict.ContainsKey(file))
-//                {
-//                    dict[file] = null;
-//                    return dict.TryRemove(file, out var value);
-//                }
+//                return dict.TryRemove(appName.Replace(Cache.runPath, ""), out var value);
 //            }
 //            return false;
 //        }
 
 //        /// <summary>
-//        /// 执行脚本
+//        /// 运行
 //        /// </summary>
-//        /// <param name="appName">应用名</param>
+//        /// <param name="appName">应用名，由文件名 + 函数名组成</param>
 //        /// <param name="param1">参数1</param>
 //        /// <param name="param2">参数2</param>
 //        /// <param name="param3">参数3</param>
-//        /// <param name="param4">参数4</param>
 //        /// <returns>返回执行结果</returns>
-//        public object Run(string appName, object param1 = null, object param2 = null, object param3 = null, object param4 = null)
+//        public object Run(string appName, object param1 = null, object param2 = null, object param3 = null)
 //        {
+//            if (dict.TryGetValue(appName, out dynamic funObj))
+//            {
+//                if (funObj != null)
+//                {
+//                    if (param1 == null)
+//                    {
+//                        return funObj();
+//                    }
+//                    else if (param2 == null)
+//                    {
+//                        return funObj(param1);
+//                    }
+//                    else if (param3 == null)
+//                    {
+//                        return funObj(param1, param2);
+//                    }
+//                    else
+//                    {
+//                        return funObj(param1, param2, param3);
+//                    }
+//                }
+//            }
+//            else
+//            {
+//                Ex = "程序未加载！";
+//            }
 //            return null;
 //        }
 
 //        /// <summary>
 //        /// 执行脚本
 //        /// </summary>
-//        /// <param name="appName">应用名</param>
+//        /// <param name="file">文件名</param>
+//        /// <param name="fun">函数名</param>
 //        /// <param name="param1">参数1</param>
 //        /// <param name="param2">参数2</param>
 //        /// <param name="param3">参数3</param>
-//        /// <param name="param4">参数4</param>
 //        /// <returns>返回执行结果</returns>
-//        public void RunAsync(string appName, object param1 = null, object param2 = null, object param3 = null, object param4 = null)
+//        public object Run(string file, string fun, object param1 = null, object param2 = null, object param3 = null)
 //        {
+//            var appName = file.Replace(Cache.runPath, "") + ":" + fun;
+//            appName = appName.ToLower();
+//            if (!dict.ContainsKey(appName))
+//            {
+//                var bl = Load(file, fun);
+//                if (!bl)
+//                {
+//                    return null;
+//                }
+//            }
+//            return Run(appName, param1, param2, param3);
+//        }
 
+//        /// <summary>
+//        /// 执行脚本
+//        /// </summary>
+//        /// <param name="file">应用名</param>
+//        /// <param name="fun">函数名</param>
+//        /// <param name="param1">参数2</param>
+//        /// <param name="param2">参数3</param>
+//        /// <param name="param3">参数4</param>
+//        /// <returns>返回执行结果</returns>
+//        public Task RunAsync(string file, string fun = null, object param1 = null, object param2 = null, object param3 = null)
+//        {
+//            return Task.Run(() => Run(file, fun, param1, param2, param3));
 //        }
 
 //        /// <summary>
 //        /// 执行脚本文件
 //        /// </summary>
 //        /// <param name="file">文件名</param>
-//        /// <param name="param1">参数1</param>
+//        /// <param name="fun">参数1</param>
 //        /// <param name="param2">参数2</param>
 //        /// <param name="param3">参数3</param>
 //        /// <param name="param4">参数4</param>
 //        /// <returns>返回执行结果</returns>
-//        public object RunFile(string file, object param1 = null, object param2 = null, object param3 = null, object param4 = null)
+//        public object RunFile(string file, string fun = null, object param1 = null, object param2 = null, object param3 = null)
 //        {
+//            if (string.IsNullOrEmpty(file))
+//            {
+//                Ex = "脚本文件名不能为空";
+//                return null;
+//            }
+//            file = Cache.ToFullName(file, _Dir);
+//            if (!File.Exists(file))
+//            {
+//                Ex = "脚本不存在！请确认脚本：“" + file + "”是否存在。";
+//                return null;
+//            }
+//            try
+//            {
+//                var scope = Eng.ExecuteFile(file);
+//                scope.SetVariable("Cache", new Cache());
+//                Engine.Dir = Path.GetDirectoryName(file) + "\\";
+//                scope.SetVariable("Engine", Engine);
+//                if (scope.TryGetVariable(fun, out dynamic funObj))
+//                {
+//                    if (param1 == null)
+//                    {
+//                        return funObj();
+//                    }
+//                    else if (param2 == null)
+//                    {
+//                        return funObj(param1);
+//                    }
+//                    else if (param3 == null)
+//                    {
+//                        return funObj(param1, param2);
+//                    }
+//                    else
+//                    {
+//                        return funObj(param1, param2, param3);
+//                    }
+//                }
+//            }
+//            catch (Exception ex)
+//            {
+//                Ex = ex.Message;
+//            }
 //            return null;
 //        }
 
@@ -144,13 +269,50 @@
 //        /// 执行脚本代码
 //        /// </summary>
 //        /// <param name="code">代码</param>
+//        /// <param name="fun">函数名</param>
 //        /// <param name="param1">参数1</param>
 //        /// <param name="param2">参数2</param>
 //        /// <param name="param3">参数3</param>
-//        /// <param name="param4">参数4</param>
 //        /// <returns>返回执行结果</returns>
-//        public object RunCode(string code, object param1 = null, object param2 = null, object param3 = null, object param4 = null)
+//        public object RunCode(string code, string fun = null, object param1 = null, object param2 = null, object param3 = null)
 //        {
+//            if (string.IsNullOrEmpty(code))
+//            {
+//                Ex = "脚本不能为空";
+//                return null;
+//            }
+//            try
+//            {
+//                var scope = Eng.CreateScope();
+//                scope.SetVariable("Cache", new Cache());
+//                Engine.Dir = _Dir;
+//                scope.SetVariable("Engine", Engine);
+//                var source = Eng.CreateScriptSourceFromString(code);
+//                var compiled = source.Execute(scope);
+//                if (scope.TryGetVariable(fun, out dynamic funObj))
+//                {
+//                    if (param1 == null)
+//                    {
+//                        return funObj();
+//                    }
+//                    else if (param2 == null)
+//                    {
+//                        return funObj(param1);
+//                    }
+//                    else if (param3 == null)
+//                    {
+//                        return funObj(param1, param2);
+//                    }
+//                    else
+//                    {
+//                        return funObj(param1, param2, param3);
+//                    }
+//                }
+//            }
+//            catch (Exception ex)
+//            {
+//                Ex = ex.Message;
+//            }
 //            return null;
 //        }
 
@@ -162,27 +324,81 @@
 //        /// <returns>返回函数</returns>
 //        public dynamic GetFun(string file, string fun = "Main")
 //        {
+//            if (string.IsNullOrEmpty(file))
+//            {
+//                Ex = "脚本文件名不能为空";
+//                return null;
+//            }
+//            file = Cache.ToFullName(file, _Dir);
+//            if (!File.Exists(file))
+//            {
+//                Ex = "脚本不存在！请确认脚本：“" + file + "”是否存在。";
+//                return null;
+//            }
+//            try
+//            {
+//                var scope = Eng.CreateScope();
+//                scope.SetVariable("Cache", new Cache());
+//                Engine.Dir = Path.GetDirectoryName(file) + "\\";
+//                scope.SetVariable("Engine", Engine);
+//                var source = Eng.CreateScriptSourceFromFile(file);
+//                if (source != null)
+//                {
+//                    var compiled = source.Compile().Execute(scope);
+//                    if (scope.TryGetVariable(fun, out dynamic funObj))
+//                    {
+//                        return funObj;
+//                    }
+//                }
+//                else
+//                {
+//                    Ex = "引用文件错误";
+//                }
+//            }
+//            catch (Exception ex)
+//            {
+//                Ex = ex.Message;
+//            }
 //            return null;
 //        }
 
-//        public object Run(string appName, string funName = null, object param1 = null, object param2 = null, object param3 = null)
+
+//        /// <summary>
+//        /// 新建脚本引擎
+//        /// </summary>
+//        /// <returns>返回脚本引擎类</returns>
+//        public static ScriptEngine NewEngine()
 //        {
-//            throw new System.NotImplementedException();
+//            var fun = "";
+//            var obj = CSScript.RoslynEvaluator.LoadCode("");
+//            var tp = obj.GetType();
+//            var funObj = tp.GetMethod(fun);
+//            tp.
+//            return obj = funObj.Invoke(obj, param1, param2, param3);
+//           var object = CSScript.Evaluator.LoadFile("tet");
+//            (new string[] { file })
+//            var runtime = Python.CreateRuntime();
+//            runtime.IO.RedirectToConsole();
+//            runtime.LoadAssembly(Assembly.GetExecutingAssembly());
+//            var engine = runtime.GetEngine("python");
+//            engine.SetSearchPaths(new string[] { ".", Cache.runPath + "Lib", Cache.runPath + "DLLs" }); //设置函数库搜索路径
+//            return engine;
 //        }
 
-//        public void RunAsync(string appName, string funName = null, object param1 = null, object param2 = null, object param3 = null)
-//        {
-//            throw new System.NotImplementedException();
+//        public Test BS() {
+//            return new Test();
 //        }
 
-//        public object RunFile(string file, string funName = null, object param1 = null, object param2 = null, object param3 = null)
-//        {
-//            throw new System.NotImplementedException();
+//        public class Test {
+//           public string BS { get; set; }
 //        }
+//    }
 
-//        public object RunCode(string code, string funName = null, object param1 = null, object param2 = null, object param3 = null)
-//        {
-//            throw new System.NotImplementedException();
+//    public class AS{
+//        public void Test() {
+//            var cs = new CS();
+//            var ret = cs.BS();
+//            ret.BS = "a";
 //        }
 //    }
 //}

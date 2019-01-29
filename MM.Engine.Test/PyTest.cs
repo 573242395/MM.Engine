@@ -26,7 +26,6 @@ namespace MM.Engine.Test
                 .WriteTo.TestOutput(output, Serilog.Events.LogEventLevel.Verbose)
                 .CreateLogger();
             Cache.runPath = Directory.GetCurrentDirectory() + "\\";
-            PY.Init();
         }
 
         /// <summary>
@@ -63,10 +62,10 @@ namespace MM.Engine.Test
         {
             string file = Cache.runPath + "script\\py\\test1.py";
             eng.Load(file);
-            string appName = file + ":Main";
+            string appName = file + ":main";
+            Log.Debug(eng.Dict.ToJson());
             var bl = eng.Unload(appName);
-
-            Log.Debug(bl.ToString());
+            Log.Debug(eng.Dict.Count.ToString());
             Assert.True(bl);
         }
 
@@ -85,6 +84,8 @@ namespace MM.Engine.Test
 
             var ret = eng.Run(file, fun, param1, param2, param3);
             Log.Debug(ret.ToJson());
+            ret = eng.Run(file, fun, param1, param2, param3);
+            Log.Debug(ret.ToJson());
             Assert.True(ret != null);
         }
 
@@ -102,7 +103,7 @@ namespace MM.Engine.Test
             object param3 = 3;
 
             eng.RunAsync(file, fun, param1, param2, param3);
-            Thread.Sleep(5000);
+            Thread.Sleep(10000);
             Log.Debug(Cache.res.ToJson());
             Assert.True(Cache.res.Count > 0);
         }
@@ -124,6 +125,10 @@ namespace MM.Engine.Test
             Log.Debug(eng.GetEx());
             Assert.True(ret != null);
             Log.Debug(ret.ToString());
+            ret = eng.RunFile(file, fun, param1, param2, param3);
+            Log.Debug(eng.GetEx());
+            Assert.True(ret != null);
+            Log.Debug(ret.ToString());
         }
 
         /// <summary>
@@ -134,7 +139,7 @@ namespace MM.Engine.Test
         {
             string code = @"
 def Main(param1 = None, param2 = None, param3 = None):
-    return 'test'";
+    return 'test' + Cache.RunPath";
             string fun = "Main";
             object param1 = 1;
             object param2 = 2;

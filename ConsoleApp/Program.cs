@@ -11,7 +11,6 @@ namespace ConsoleApp
 
         static void Main(string[] args)
         {
-            PY.Init();
             Cache.runPath = Directory.GetCurrentDirectory() + "\\";
             Load();
             //RunFile();
