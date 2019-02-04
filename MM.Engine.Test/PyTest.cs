@@ -1,78 +1,80 @@
-﻿using Serilog;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace MM.Engine.Test
 {
     /// <summary>
     /// python脚本引擎测试
     /// </summary>
+    [TestClass()]
     public class PyTest
     {
+        /// <summary>
+        ///获取或设置测试上下文，该上下文提供
+        ///有关当前测试运行及其功能的信息。
+        ///</summary>
+        public TestContext TestContext { get; set; }
+
         public PY eng = new PY();
+
 
         /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="output">输出接口</param>
-        public PyTest(ITestOutputHelper output)
+        public PyTest()
         {
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.TestOutput(output, Serilog.Events.LogEventLevel.Verbose)
-                .CreateLogger();
             Cache.runPath = Directory.GetCurrentDirectory() + "\\";
         }
 
         /// <summary>
         /// 遍历加载
         /// </summary>
-        [Fact]
-        private void EachLoad()
+        [TestMethod()]
+        public void EachLoad()
         {
             List<string> appList = new List<string>() { Cache.runPath + "script\\test.py", Cache.runPath + "script\\py\\test1.py" };
 
             var bl = eng.EachLoad(appList);
-            Log.Debug(bl.ToString());
-            Assert.True(bl);
+            Console.WriteLine(bl.ToString());
+            Assert.IsTrue(bl);
         }
 
         /// <summary>
         /// 载入脚本
         /// </summary>
-        [Fact]
-        private void Load()
+        [TestMethod()]
+        public void Load()
         {
             string file = Cache.runPath + "script\\py\\test1.py";
 
             var bl = eng.Load(file);
-            Log.Debug(bl.ToString());
-            Assert.True(bl);
+            Console.WriteLine(bl.ToString());
+            Assert.IsTrue(bl);
         }
 
         /// <summary>
         /// 卸载脚本
         /// </summary>
-        [Fact]
-        private void Unload()
+        [TestMethod()]
+        public void Unload()
         {
             string file = Cache.runPath + "script\\py\\test1.py";
             eng.Load(file);
-            string appName = file + ":main";
-            Log.Debug(eng.Dict.ToJson());
+            string appName = file;
+            var count = eng.Dict.Count;
             var bl = eng.Unload(appName);
-            Log.Debug(eng.Dict.Count.ToString());
-            Assert.True(bl);
+            Console.WriteLine(count + ">" + eng.Dict.Count);
+            Assert.IsTrue(bl);
         }
 
         /// <summary>
         /// 执行脚本
         /// </summary>
-        [Fact]
+        [TestMethod()]
         public void Run()
         {
             string file = Cache.runPath + "script\\py\\test1.py";
@@ -83,16 +85,16 @@ namespace MM.Engine.Test
             object param3 = 3;
 
             var ret = eng.Run(file, fun, param1, param2, param3);
-            Log.Debug(ret.ToJson());
+            Console.WriteLine(ret.ToJson());
             ret = eng.Run(file, fun, param1, param2, param3);
-            Log.Debug(ret.ToJson());
-            Assert.True(ret != null);
+            Console.WriteLine(ret.ToJson());
+            Assert.IsTrue(ret != null);
         }
 
         /// <summary>
         /// 执行脚本
         /// </summary>
-        [Fact]
+        [TestMethod()]
         public void RunAsync()
         {
             string file = Cache.runPath + "script\\test.py";
@@ -104,16 +106,16 @@ namespace MM.Engine.Test
 
             eng.RunAsync(file, fun, param1, param2, param3);
             Thread.Sleep(10000);
-            Log.Debug(Cache.res.ToJson());
-            Assert.True(Cache.res.Count > 0);
+            Console.WriteLine(Cache.res.ToJson());
+            Assert.IsTrue(Cache.res.Count > 0);
         }
 
         /// <summary>
         /// 执行脚本文件
         /// </summary>
         /// <returns>返回执行结果</returns>
-        [Fact]
-        private void RunFile()
+        [TestMethod()]
+        public void RunFile()
         {
             string file = Cache.runPath  + "script\\test.py";
             string fun = "Main";
@@ -122,33 +124,34 @@ namespace MM.Engine.Test
             object param3 = 3;
 
             var ret = eng.RunFile(file, fun, param1, param2, param3);
-            Log.Debug(eng.GetEx());
-            Assert.True(ret != null);
-            Log.Debug(ret.ToString());
+            Console.WriteLine(eng.GetEx());
+            Assert.IsTrue(ret != null);
+            Console.WriteLine(ret.ToString());
             ret = eng.RunFile(file, fun, param1, param2, param3);
-            Log.Debug(eng.GetEx());
-            Assert.True(ret != null);
-            Log.Debug(ret.ToString());
+            Console.WriteLine(eng.GetEx());
+            Assert.IsTrue(ret != null);
+            Console.WriteLine(ret.ToString());
         }
 
         /// <summary>
         /// 执行脚本代码
         /// </summary>
-        [Fact]
-        private void RunCode()
+        [TestMethod()]
+        public void RunCode()
         {
             string code = @"
-def Main(param1 = None, param2 = None, param3 = None):
-    return 'test' + Cache.RunPath";
+def Main(fun, param1 = None, param2 = None, param3 = None):
+	ret = param1 + param2 + param3
+	return '测试1' + str(ret)";
             string fun = "Main";
             object param1 = 1;
             object param2 = 2;
             object param3 = 3;
 
             var ret = eng.RunCode(code, fun, param1, param2, param3);
-            Log.Debug(eng.GetEx());
-            Log.Debug(ret.ToString());
-            Assert.True(ret != null);
+            Console.WriteLine(eng.GetEx());
+            Console.WriteLine(ret.ToString());
+            Assert.IsTrue(ret != null);
         }
     }
 }
