@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace MM.Engine
@@ -216,7 +217,18 @@ namespace MM.Engine
             try
             {
                 var code = File.ReadAllText(file, Encoding.UTF8);
-                var scope = CSScript.Evaluator.LoadCode("using System;\npublic class Script : MM.Engine.Common\n{\n" + code + "\n}");
+                var dll = "";
+                if (code.Contains("using "))
+                {
+                    var ms = new Regex("using [.A-Z0-9a-z]+;").Matches(code);
+                    for (var i = 0; i < ms.Count; i++) {
+                        var o = ms[i];
+                        var value = o.Value;
+                        dll += value + "\n";
+                        code = code.Replace(value, "");
+                    }
+                }
+                var scope = CSScript.Evaluator.LoadCode(dll + "public class Script : MM.Engine.Common\n{\n" + code + "\n}");
                 if (scope != null)
                 {
                     scope.SetValue("Cache", new Cache());
@@ -269,7 +281,19 @@ namespace MM.Engine
             }
             try
             {
-                var scope = CSScript.Evaluator.LoadCode("using System;\npublic class Script : MM.Engine.Common\n{\n" + code + "\n}");
+                var dll = "";
+                if (code.Contains("using "))
+                {
+                    var ms = new Regex("using [.A-Z0-9a-z]+;").Matches(code);
+                    for (var i = 0; i < ms.Count; i++)
+                    {
+                        var o = ms[i];
+                        var value = o.Value;
+                        dll += value + "\n";
+                        code = code.Replace(value, "");
+                    }
+                }
+                var scope = CSScript.Evaluator.LoadCode(dll + "public class Script : MM.Engine.Common\n{\n" + code + "\n}");
                 if (scope != null)
                 {
                     scope.SetValue("Cache", new Cache());
@@ -326,7 +350,19 @@ namespace MM.Engine
             try
             {
                 var code = File.ReadAllText(file, Encoding.UTF8);
-                var scope = CSScript.Evaluator.LoadCode("using System;\npublic class Script : MM.Engine.Common\n{\n" + code + "\n}");
+                var dll = "";
+                if (code.Contains("using "))
+                {
+                    var ms = new Regex("using [.A-Z0-9a-z]+;").Matches(code);
+                    for (var i = 0; i < ms.Count; i++)
+                    {
+                        var o = ms[i];
+                        var value = o.Value;
+                        dll += value + "\n";
+                        code = code.Replace(value, "");
+                    }
+                }
+                var scope = CSScript.Evaluator.LoadCode(dll + "public class Script : MM.Engine.Common\n{\n" + code + "\n}");
                 if (scope != null)
                 {
                     scope.SetValue("Cache", new Cache());

@@ -6,7 +6,7 @@ namespace MM.Engine.Cmd
 {
     class Program
     {
-        public static PY eng = new PY();
+        public static LuaEngine eng = new LuaEngine();
 
         static void Main(string[] args)
         {
@@ -34,7 +34,7 @@ def Main(funName, param1 = None, param2 = None, param3 = None):
 
         private static void RunFile()
         {
-            string file = Cache.runPath + "script\\test.py";
+            string file = Cache.runPath + "script\\test.lua";
             string fun = "Main";
             object param1 = 1;
             object param2 = 2;
