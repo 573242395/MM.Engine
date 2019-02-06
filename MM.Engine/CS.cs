@@ -12,7 +12,7 @@ namespace MM.Engine
     /// <summary>
     /// 脚本引擎接口
     /// </summary>
-    public class CS
+    public class CS : IEngine
     {
         private readonly string _Dir;
 
@@ -258,7 +258,7 @@ namespace MM.Engine
             }
             catch (Exception ex)
             {
-                Ex = ex.Message;
+                Ex = ex.ToString();
             }
             return null;
         }
@@ -323,7 +323,7 @@ namespace MM.Engine
             }
             catch (Exception ex)
             {
-                Ex = ex.Message;
+                Ex = ex.ToString();
             }
             return null;
         }
@@ -332,7 +332,6 @@ namespace MM.Engine
         /// 获取函数
         /// </summary>
         /// <param name="file">文件名</param>
-        /// <param name="fun">函数名</param>
         /// <returns>返回函数</returns>
         public dynamic GetClass(string file)
         {
@@ -362,7 +361,7 @@ namespace MM.Engine
                         code = code.Replace(value, "");
                     }
                 }
-                var scope = CSScript.Evaluator.LoadCode(dll + "public class Script : MM.Engine.Common\n{\n" + code + "\n}");
+                var scope = CSScript.Evaluator.CompileCode(dll + "public class Script : MM.Engine.Common\n{\n" + code + "\n}").CreateObject("*");
                 if (scope != null)
                 {
                     scope.SetValue("Cache", new Cache());
@@ -376,7 +375,7 @@ namespace MM.Engine
             }
             catch (Exception ex)
             {
-                Ex = ex.Message;
+                Ex = ex.ToString();
             }
             return null;
         }

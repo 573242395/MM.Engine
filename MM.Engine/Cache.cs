@@ -4,6 +4,9 @@ using System.IO;
 
 namespace MM.Engine
 {
+    /// <summary>
+    /// 缓存
+    /// </summary>
     public class Cache
     {
         /// <summary>
@@ -13,7 +16,16 @@ namespace MM.Engine
         /// <summary>
         /// 运行路径
         /// </summary>
-        public string RunPath { get { return runPath; } set { runPath = value; } }
+        public string RunPath { get { return runPath; } set { runPath = value; _Path = new PathModel(runPath);} }
+
+        /// <summary>
+        /// 路径模型
+        /// </summary>
+        internal static PathModel _Path = new PathModel(runPath);
+        /// <summary>
+        /// 路径模型
+        /// </summary>
+        public PathModel Path { get { return _Path; }}
 
         /// <summary>
         /// 请求参数

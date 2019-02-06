@@ -247,7 +247,7 @@ namespace MM.Engine
             }
             catch (Exception ex)
             {
-                Ex = ex.Message;
+                Ex = ex.ToString();
             }
             return null;
         }
@@ -298,7 +298,7 @@ namespace MM.Engine
             }
             catch (Exception ex)
             {
-                Ex = ex.Message;
+                Ex = ex.ToString();
             }
             return null;
         }
@@ -307,7 +307,6 @@ namespace MM.Engine
         /// 获取函数
         /// </summary>
         /// <param name="file">文件名</param>
-        /// <param name="fun">函数名</param>
         /// <returns>返回函数</returns>
         public dynamic GetClass(string file)
         {
@@ -336,7 +335,7 @@ namespace MM.Engine
             }
             catch (Exception ex)
             {
-                Ex = ex.Message;
+                Ex = ex.ToString();
             }
             return null;
         }

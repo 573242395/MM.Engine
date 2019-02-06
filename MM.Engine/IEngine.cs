@@ -44,7 +44,7 @@ namespace MM.Engine
         /// <param name="param2">参数2</param>
         /// <param name="param3">参数3</param>
         /// <returns>返回执行结果</returns>
-        object Run(string appName, string fun, object param1 = null, object param2 = null, object param3 = null);
+        object Run(string appName, object fun, object param1 = null, object param2 = null, object param3 = null);
 
         /// <summary>
         /// 执行脚本
@@ -55,7 +55,7 @@ namespace MM.Engine
         /// <param name="param2">参数2</param>
         /// <param name="param3">参数3</param>
         /// <returns>返回执行结果</returns>
-        Task RunAsync(string appName, string fun, object param1 = null, object param2 = null, object param3 = null);
+        Task RunAsync(string appName, object fun, object param1 = null, object param2 = null, object param3 = null);
 
         /// <summary>
         /// 执行脚本文件
@@ -66,7 +66,7 @@ namespace MM.Engine
         /// <param name="param2">参数2</param>
         /// <param name="param3">参数3</param>
         /// <returns>返回执行结果</returns>
-        object RunFile(string file, string fun, object param1 = null, object param2 = null, object param3 = null);
+        object RunFile(string file, object fun, object param1 = null, object param2 = null, object param3 = null);
 
         /// <summary>
         /// 执行脚本代码
@@ -77,7 +77,7 @@ namespace MM.Engine
         /// <param name="param2">参数2</param>
         /// <param name="param3">参数3</param>
         /// <returns>返回执行结果</returns>
-        object RunCode(string code, string fun, object param1 = null, object param2 = null, object param3 = null);
+        object RunCode(string code, object fun, object param1 = null, object param2 = null, object param3 = null);
 
         /// <summary>
         /// 获取函数
