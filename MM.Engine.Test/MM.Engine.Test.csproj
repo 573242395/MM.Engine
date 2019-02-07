@@ -86,6 +86,7 @@
   <ItemGroup>
     <Compile Include="JsonExpand.cs" />
     <Compile Include="LuaTest.cs" />
+    <Compile Include="RazorTest.cs" />
     <Compile Include="VbsTest.cs" />
     <Compile Include="ObjectExpand.cs" />
     <Compile Include="JsTest.cs" />

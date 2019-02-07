@@ -4,6 +4,7 @@ using RazorEngine.Templating;
 using RazorEngine.Text;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -25,23 +26,10 @@ namespace MM.Engine
         private static readonly Regex layoutEx = new Regex("Layout\\s*=\\s*@?\"(\\S*)\";");//匹配视图中的layout
 
         /// <summary>
-        /// 主题
+        /// 模板主题风格
         /// </summary>
-        public static string theme = "default";
+        public string Theme { get { return Cache._Theme; } set { if (!string.IsNullOrEmpty(value)) { Cache._Theme = value; } } }
 
-        /// <summary>
-        /// 主题
-        /// </summary>
-        public string Theme
-        {
-            get { return theme; }
-            set { theme = value; }
-        }
-
-        /// <summary>
-        /// 视图模型
-        /// </summary>
-        public DynamicViewBag ViewBag { get; set; } = new DynamicViewBag();
 
         /// <summary>
         /// 模板路径
@@ -58,7 +46,7 @@ namespace MM.Engine
         /// <summary>
         /// 初始化
         /// </summary>
-        public void Init()
+        public static void Init()
         {
             SetManager();
             //添加文件修改监控，以便在cshtml文件修改时重新编译该文件
@@ -85,14 +73,19 @@ namespace MM.Engine
             razor = RazorEngineService.Create(config);
         }
 
-        private void SetManager()
+        private static void SetManager()
         {
             mg = new MmTemplateManager(InFunc);
         }
 
-        private string InFunc(string arg)
+        private static string InFunc(string arg)
         {
-            return Load(arg);
+            var fe = Cache.ToFullName(arg);
+            if (File.Exists(fe))
+            {
+                return File.ReadAllText(fe, System.Text.Encoding.UTF8);
+            }
+            return "";
         }
 
         private static void OnChanged(object sender, FileSystemEventArgs e)
@@ -101,13 +94,7 @@ namespace MM.Engine
             cache.InvalidateCache(key);
         }
 
-        /// <summary>
-        /// 新建视图背包
-        /// </summary>
-        public DynamicViewBag NewViewBag()
-        {
-            return new DynamicViewBag();
-        }
+
 
         /// <summary>
         /// 清除缓存
@@ -115,6 +102,69 @@ namespace MM.Engine
         public void ClearCache()
         {
             cache.InvalidateAll();
+        }
+
+        #region 视图背包
+        /// <summary>
+        /// 视图背包
+        /// </summary>
+        public static DynamicViewBag viewBag = new DynamicViewBag();
+
+        /// <summary>
+        /// 新建视图背包
+        /// </summary>
+        public DynamicViewBag NewViewBag_default()
+        {
+            viewBag = new DynamicViewBag(viewBag);
+            return viewBag;
+        }
+
+        /// <summary>
+        /// 视图背包添加成员
+        /// </summary>
+        /// <param name="key">键</param>
+        /// <param name="value">值</param>
+        public void Add_default(string key, string value)
+        {
+            viewBag.AddValue(key, value);
+        }
+
+        /// <summary>
+        /// 视图背包添加字典
+        /// </summary>
+        /// <param name="dt">字典类型</param>
+        public void Add_default(Dictionary<string, object> dt)
+        {
+            viewBag.AddDictionary(dt);
+        }
+
+        /// <summary>
+        /// 获取所有成员名称
+        /// </summary>
+        public List<string> GetKeys_default()
+        {
+            var arr = viewBag.GetDynamicMemberNames();
+            if (arr != null)
+            {
+                return arr.ToList();
+            }
+            return new List<string>();
+        }
+        #endregion
+
+        #region 视图背包
+        /// <summary>
+        /// 视图背包
+        /// </summary>
+        public DynamicViewBag ViewBag { get; set; } = new DynamicViewBag();
+
+        /// <summary>
+        /// 新建视图背包
+        /// </summary>
+        public DynamicViewBag NewViewBag()
+        {
+            ViewBag = new DynamicViewBag(viewBag);
+            return ViewBag;
         }
 
         /// <summary>
@@ -127,19 +177,20 @@ namespace MM.Engine
         }
 
         /// <summary>
-        /// 新建字典
+        /// 视图背包添加成员
         /// </summary>
-        /// <returns>返回新字典</returns>
+        /// <param name="key">键</param>
+        /// <param name="value">值</param>
         public void Add(string key, string value)
         {
             ViewBag.AddValue(key, value);
         }
 
         /// <summary>
-        /// 添加字典
+        /// 视图背包添加字典
         /// </summary>
         /// <param name="dt">字典类型</param>
-        public void AddDictionary(Dictionary<string, object> dt)
+        public void Add(Dictionary<string, object> dt)
         {
             ViewBag.AddDictionary(dt);
         }
@@ -147,7 +198,7 @@ namespace MM.Engine
         /// <summary>
         /// 获取所有成员名称
         /// </summary>
-        public List<string> GetNames()
+        public List<string> GetKeys()
         {
             var arr = ViewBag.GetDynamicMemberNames();
             if (arr != null)
@@ -156,6 +207,7 @@ namespace MM.Engine
             }
             return new List<string>();
         }
+        #endregion
 
         /// <summary>
         /// 构造函数
@@ -164,9 +216,10 @@ namespace MM.Engine
         public TPL(string dir = "")
         {
             Dir = dir;
+            NewViewBag();
         }
 
-        #region 文本渲染,适用于客户端
+        #region 文本渲染,适用于web客户端
         /// <summary>
         /// 预编译模板
         /// </summary>
@@ -251,68 +304,13 @@ namespace MM.Engine
         }
 
         /// <summary>
-        /// 转换路径
-        /// </summary>
-        /// <param name="file">文件名</param>
-        /// <param name="dir">当前路径</param>
-        /// <returns>返回完整物理路径</returns>
-        public string ToFullName(string file, string dir = "")
-        {
-            if (file == null)
-            {
-                return "";
-            }
-            file = file.Replace("/", @"\").Replace(@"\\", @"\");
-            if (file.StartsWith(@"\"))
-            {
-                file = Cache._Path.Web + file.Substring(1);
-            }
-            else if (file.StartsWith(@"~\"))
-            {
-                var p = Cache._Path.Template;
-                if (!string.IsNullOrEmpty(Theme))
-                {
-                    p += Theme + "\\";
-                }
-                file = p + file.Substring(2);
-            }
-            else
-            {
-                if (string.IsNullOrEmpty(dir))
-                {
-                    dir = Dir;
-                }
-                if (!string.IsNullOrEmpty(dir))
-                {
-                    if (!dir.EndsWith(@"\"))
-                    {
-                        dir += @"\";
-                    }
-                    if (file.StartsWith(@".\"))
-                    {
-                        file = dir + file.Substring(2);
-                    }
-                    else if (file.StartsWith(@"..\"))
-                    {
-                        file = dir + file.Substring(3);
-                    }
-                    else
-                    {
-                        file = Cache._Path.Template + file;
-                    }
-                }
-            }
-            return file.ToLower();
-        }
-
-        /// <summary>
         /// 模板渲染
         /// </summary>
         /// <param name="file">模板文件</param>
         /// <returns>返回渲染后文本</returns>
         public string Load(string file)
         {
-            var fe = ToFullName(file);
+            var fe = Cache.ToFullName(file, Dir);
             if (File.Exists(fe))
             {
                 return File.ReadAllText(fe, System.Text.Encoding.UTF8);
@@ -329,7 +327,7 @@ namespace MM.Engine
         /// <returns>返回渲染后文本</returns>
         public string View(string file, object model = null)
         {
-            file = ToFullName(file);
+            file = Cache.ToFullName(file, Dir);
             var text = Load(file);
             if (!string.IsNullOrEmpty(text))
             {

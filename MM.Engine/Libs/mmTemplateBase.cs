@@ -10,9 +10,9 @@ namespace MM.Engine
     public abstract class MmTemplateBase<T> : TemplateBase<T>
     {
         /// <summary>
-        /// 主题风格
+        /// 模板主题风格
         /// </summary>
-        public string Theme { get; set; }
+        public string Theme { get { return Cache._Theme; } set { if (!string.IsNullOrEmpty(value)) { Cache._Theme = value; } } }
 
         /// <summary>
         /// 当前文件路径
@@ -34,7 +34,7 @@ namespace MM.Engine
         /// <returns>返回视图</returns>
         public TemplateWriter View(string name)
         {
-            var file = ToFullName(name);
+            var file = Cache.ToFullName(name, Dir);
             return Include(file);
         }
 
@@ -47,63 +47,8 @@ namespace MM.Engine
         /// <returns>返回视图</returns>
         public TemplateWriter View(string name, object model, Type tp = null)
         {
-            var file = ToFullName(name);
+            var file = Cache.ToFullName(name, Dir);
             return Include(file, model, tp);
-        }
-
-        /// <summary>
-        /// 转换路径
-        /// </summary>
-        /// <param name="file">文件名</param>
-        /// <param name="dir">当前路径</param>
-        /// <returns>返回完整物理路径</returns>
-        public string ToFullName(string file, string dir = "")
-        {
-            if (file == null)
-            {
-                return "";
-            }
-            file = file.Replace("/", @"\").Replace(@"\\", @"\");
-            if (file.StartsWith(@"\"))
-            {
-                file = Cache._Path.Web + file.Substring(1);
-            }
-            else if (file.StartsWith(@"~\"))
-            {
-                var p = Cache._Path.Template;
-                if (!string.IsNullOrEmpty(Theme))
-                {
-                    p += Theme + "\\";
-                }
-                file = p + file.Substring(2);
-            }
-            else
-            {
-                if (string.IsNullOrEmpty(dir))
-                {
-                    dir = Dir;
-                }
-                if (!string.IsNullOrEmpty(dir))
-                {
-                    if (!dir.EndsWith(@"\"))
-                    {
-                        dir += @"\";
-                    }
-                    if (file.StartsWith(@".\"))
-                    {
-                        file = dir + file.Substring(2);
-                    }
-                    else if (file.StartsWith(@"..\"))
-                    {
-                        file = dir + file.Substring(3);
-                    }
-                    else
-                    {
-                        file = Cache._Path.Template + file;
-                    }
-                }
-            }
-            return file.ToLower();
         }
     }
 }

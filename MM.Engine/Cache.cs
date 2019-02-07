@@ -46,6 +46,15 @@ namespace MM.Engine
         public ConcurrentDictionary<string, object> Res { get { return res; } set { res = value; } }
 
         /// <summary>
+        /// 模板主题风格
+        /// </summary>
+        internal static string _Theme = "default";
+        /// <summary>
+        /// 模板主题风格
+        /// </summary>
+        public string Theme { get { return _Theme; } set { if (!string.IsNullOrEmpty(value)) { _Theme = value; } } }
+
+        /// <summary>
         /// 转为文件全名
         /// </summary>
         /// <param name="fileName">文件名</param>
@@ -54,19 +63,23 @@ namespace MM.Engine
         internal static string ToFullName(string fileName, string dir = "")
         {
             var file = fileName.Replace("/", "\\");
-            if (file.StartsWith(".\\"))
+            if (file.StartsWith(@".\"))
             {
                 file = dir + file.Substring(2);
             }
-            else if (file.StartsWith("..\\"))
+            else if (file.StartsWith(@"..\"))
             {
-                file = dir + file;
+                file = dir + @"..\" + file;
             }
-            else if (file.StartsWith("\\"))
+            else if (file.StartsWith(@"\"))
             {
-                file = runPath + file.Substring(1);
+                file = _Path.Web + file.Substring(1);
             }
-            return file;
+            else if (file.StartsWith(@"~\"))
+            {
+                file = _Path.Template + _Theme + "\\" + file.Substring(2);
+            }
+            return file.ToLower();
         }
 
         /// <summary>

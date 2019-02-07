@@ -8,24 +8,42 @@ namespace MM.Engine.Cmd
     {
         public static LUA eng = new LUA();
 
+        public static TPL tpl = new TPL();
+
         static void Main(string[] args)
         {
             Cache.runPath = Directory.GetCurrentDirectory() + "\\";
-            EachLoad();
-            Unload();
-            Load();
-            Run();
-            RunFile();
-            RunCode();
+            //EachLoad();
+            //Unload();
+            //Load();
+            //Run();
+            //RunFile();
+            //RunCode();
+            TPL.Init();
+            View();
             Console.ReadLine();
         }
+
+        /// <summary>
+        /// Razor模板引擎渲染
+        /// </summary>
+        public static void View() {
+            tpl.Dir = Cache.runPath;
+            var model = new { Version = 1.0, Desc = "这是使用Razor模板引擎的视图渲染", Role = new { Name = "小白", Age = 18, Sex = true } };
+            var ret = tpl.View("./wwwroot/template/default/test.cshtml", model);
+            Console.WriteLine("第一次输出：" + ret);
+            ret = tpl.View("~/test.cshtml", model);
+            Console.WriteLine("第二次输出：" + ret);
+            Console.WriteLine("Razor模板引擎渲染结果：" + (ret != null));
+            Console.WriteLine(tpl.Ex);
+        }
+
         /// <summary>
         /// 遍历加载
         /// </summary>
         public static void EachLoad()
         {
             List<string> appList = new List<string>() { Cache.runPath + "script\\test.lua", Cache.runPath + "script\\lua\\test1.lua" };
-
             var bl = eng.EachLoad(appList);
             Console.WriteLine("EachLoad结果：" + bl);
         }

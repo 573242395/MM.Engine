@@ -196,6 +196,7 @@
     <Compile Include="Libs\Common.cs" />
     <Compile Include="EngineHelper.cs" />
     <Compile Include="CS.cs" />
+    <Compile Include="Libs\Dict.cs" />
     <Compile Include="Libs\MmTemplateManager.cs" />
     <Compile Include="LUA.cs" />
     <Compile Include="Libs\MmCachingProvider.cs" />
